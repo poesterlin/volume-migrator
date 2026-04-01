@@ -12,17 +12,6 @@ A CLI tool built with Bun + TypeScript that migrates persistent data of a servic
 - Verifies the migration result
 - Provides clear, human-readable status and error messages throughout
 
-## What it does not do
-
-- Migrate entire Coolify instances
-- Replace HA/failover setups
-- Perform native database backup/restore
-- Provide a web UI
-
-## Who it's for
-
-Internal developers and ops staff with SSH access to Coolify hosts who need to move service data between servers without deep Docker or Coolify expertise.
-
 ## CLI Commands
 
 | Command         | Purpose                                              |
