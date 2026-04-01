@@ -16,22 +16,32 @@ A CLI tool built with Bun + TypeScript that migrates persistent data of a servic
 
 | Command         | Purpose                                              |
 |-----------------|------------------------------------------------------|
+| `wizard`        | Interactive step-by-step guide to set up and run a migration |
 | `migrate`       | Run a full migration (interactive, flags, or both)   |
 | `inspect`       | Show containers, mounts, risks, and matchings        |
 | `list-services` | List discoverable services on a host                 |
 | `verify`        | Check target health after a migration                |
 | `doctor`        | Diagnose SSH, Docker, rsync availability and permissions |
 
+## Installation
+
+Download the latest release:
+
+```bash
+sudo curl -sL -o /usr/local/bin/volume-migrator https://github.com/poesterlin/volume-migrator/releases/latest/download/volume-migrator-linux-x64
+sudo chmod +x /usr/local/bin/volume-migrator
+```
+
 ## Usage
 
-Interactive:
+Guided wizard (recommended for first-time use):
 ```bash
-bun run src/cli.ts migrate
+volume-migrator wizard
 ```
 
 With flags:
 ```bash
-bun run src/cli.ts migrate \
+volume-migrator migrate \
   --source root@server-a \
   --target root@server-b \
   --source-service n8n \
@@ -40,7 +50,7 @@ bun run src/cli.ts migrate \
 
 Fully non-interactive:
 ```bash
-bun run src/cli.ts migrate \
+volume-migrator migrate \
   --source root@server-a \
   --target root@server-b \
   --source-service n8n \
@@ -57,6 +67,22 @@ bun run src/cli.ts migrate \
 
 ## Requirements
 
-- Bun runtime
+- Linux x64
 - SSH access to source and target hosts
 - Docker and rsync installed on both hosts
+
+## Development
+
+Run from source (requires [Bun](https://bun.sh)):
+
+```bash
+bun install
+bun run src/cli.ts migrate
+```
+
+Build a standalone binary locally:
+
+```bash
+bun run build:bin
+./volume-migrator doctor
+```
