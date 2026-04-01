@@ -4,7 +4,7 @@ import { inspectServiceMounts } from "./mount-discovery";
 import { measureMountSize } from "./mount-size";
 import { listServicesOnHost } from "./service-discovery";
 import { matchMounts } from "./matching";
-import { exec } from "../infra/ssh";
+import { exec, resolveSshKey } from "../infra/ssh";
 
 // ---------------------------------------------------------------------------
 // Service resolution
@@ -145,6 +145,12 @@ export async function buildMigrationPlan(
 ): Promise<MigrationPlan> {
   const sourceHost = flags.source;
   const targetHost = flags.target;
+
+  // Resolve Coolify SSH keys for remote hosts before any remote calls
+  await Promise.all([
+    sourceHost ? resolveSshKey(sourceHost) : undefined,
+    targetHost ? resolveSshKey(targetHost) : undefined,
+  ]);
 
   // Resolve services
   const sourceService = await resolveService(sourceHost, flags.sourceService!);

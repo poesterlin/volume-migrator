@@ -1,5 +1,6 @@
 import { listServicesOnHost } from "../core/service-discovery";
 import { runLocalToolChecks } from "../core/preflight";
+import { resolveSshKey } from "../infra/ssh";
 import { migrateCommand } from "./migrate";
 import type { CommandHandler } from "../domain/types";
 import { promptInput, promptConfirm, promptSelect } from "../utils/prompt";
@@ -241,6 +242,18 @@ export const wizardCommand: CommandHandler = async (_args, options) => {
   const preflightOk = await runPreflight();
   if (!preflightOk) {
     process.exit(3);
+  }
+
+  // 2b — Resolve Coolify SSH keys for remote hosts
+  for (const host of [source, target]) {
+    if (!host) continue;
+    console.log(`\nLooking for Coolify SSH keys for ${host}...`);
+    const key = await resolveSshKey(host);
+    if (key) {
+      console.log(`  Found key: ${key}`);
+    } else {
+      console.log(`  No Coolify key found — using default SSH config.`);
+    }
   }
 
   // 3 — Source service

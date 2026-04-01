@@ -1,4 +1,4 @@
-import { exec } from "../infra/ssh";
+import { exec, buildSshArgs, buildRsyncSshArg } from "../infra/ssh";
 import type { MountInfo } from "./mount-discovery";
 import type { MigrationPlan, MountMapping } from "../domain/types";
 import { TransferError } from "../domain/errors";
@@ -249,13 +249,7 @@ function buildTarExportCmd(
   const dockerCmd = `docker run --rm -v ${volumeName}:/data:ro alpine tar ${tarFlags} - -C /data .`;
 
   if (host) {
-    return [
-      "ssh",
-      "-o", "BatchMode=yes",
-      "-o", "ConnectTimeout=10",
-      host,
-      dockerCmd,
-    ];
+    return [...buildSshArgs(host), dockerCmd];
   }
   return ["bash", "-c", dockerCmd];
 }
@@ -269,13 +263,7 @@ function buildTarImportCmd(
   const dockerCmd = `docker run --rm -i -v ${volumeName}:/data alpine tar ${tarFlags} - -C /data`;
 
   if (host) {
-    return [
-      "ssh",
-      "-o", "BatchMode=yes",
-      "-o", "ConnectTimeout=10",
-      host,
-      dockerCmd,
-    ];
+    return [...buildSshArgs(host), dockerCmd];
   }
   return ["bash", "-c", dockerCmd];
 }
@@ -413,7 +401,7 @@ async function transferBindRsync(
     "-aHAX",
     "--numeric-ids",
     ...(sourceHost || targetHost
-      ? ["-e", "ssh -o BatchMode=yes -o ConnectTimeout=10"]
+      ? ["-e", buildRsyncSshArg(sourceHost ?? targetHost!)]
       : []),
     src,
     dst,
@@ -460,18 +448,12 @@ async function transferBindTarStream(
   });
 
   const exportCmd = [
-    "ssh",
-    "-o", "BatchMode=yes",
-    "-o", "ConnectTimeout=10",
-    sourceHost,
+    ...buildSshArgs(sourceHost),
     `tar ${tarCreate} - -C ${sourcePath} .`,
   ];
 
   const importCmd = [
-    "ssh",
-    "-o", "BatchMode=yes",
-    "-o", "ConnectTimeout=10",
-    targetHost,
+    ...buildSshArgs(targetHost),
     `mkdir -p ${targetPath} && tar ${tarExtract} - -C ${targetPath}`,
   ];
 
