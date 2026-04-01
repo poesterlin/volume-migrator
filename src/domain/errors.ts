@@ -58,3 +58,10 @@ export class MatchingError extends CliError {
     this.name = "MatchingError";
   }
 }
+
+export class TransferError extends CliError {
+  constructor(payload: Omit<CliErrorPayload, "exitCode">) {
+    super({ ...payload, exitCode: ExitCode.TransferFailed });
+    this.name = "TransferError";
+  }
+}

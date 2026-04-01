@@ -5,6 +5,7 @@ import { inspectCommand } from "./commands/inspect";
 import { listServicesCommand } from "./commands/list-services";
 import { migrateCommand } from "./commands/migrate";
 import { verifyCommand } from "./commands/verify";
+import { wizardCommand } from "./commands/wizard";
 import { CliError, ExitCode } from "./domain/errors";
 import type { CommandSpec, GlobalCliOptions } from "./domain/types";
 
@@ -33,6 +34,11 @@ const commands: CommandSpec[] = [
     name: "doctor",
     description: "Check local/remote prerequisites (SSH, Docker, rsync)",
     handler: doctorCommand,
+  },
+  {
+    name: "wizard",
+    description: "Interactive step-by-step guide to set up and run a migration",
+    handler: wizardCommand,
   },
 ];
 

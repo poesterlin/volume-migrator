@@ -11,9 +11,13 @@
     "test": "bun test"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/cli-progress": "^3.11.6"
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "dependencies": {
+    "cli-progress": "^3.12.0"
   }
 }

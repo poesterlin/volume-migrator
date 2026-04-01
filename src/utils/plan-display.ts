@@ -8,10 +8,22 @@ export function printPlan(plan: MigrationPlan, logger: Logger): void {
   logger.info("Migration Plan");
   logger.info("==============\n");
 
-  logger.info(`  Source:  ${plan.sourceService} on ${plan.sourceHost}`);
-  logger.info(`  Target:  ${plan.targetService} on ${plan.targetHost}`);
-  logger.info(`  Clear target before restore: ${plan.clearTarget ? "yes" : "no"}`);
+  logger.info(`  Source:          ${plan.sourceService} on ${plan.sourceHost}`);
+  logger.info(`  Target:          ${plan.targetService} on ${plan.targetHost}`);
+  logger.info(`  Stop source:     ${plan.stopSource ? "yes" : "no"}`);
+  logger.info(`  Stop target:     ${plan.stopTarget ? "yes" : "no"}`);
+  logger.info(`  Clear target:    ${plan.clearTarget ? "yes" : "no"}`);
+  logger.info(`  Start target:    ${plan.startTarget ? "yes" : "no"}`);
   logger.info("");
+
+  // Warnings
+  if (plan.warnings.length > 0) {
+    logger.warn("  Warnings:");
+    for (const warning of plan.warnings) {
+      logger.warn(`    ! ${warning}`);
+    }
+    logger.info("");
+  }
 
   logger.info(`  ${plan.mappings.length} mount(s) to transfer:\n`);
 
@@ -19,15 +31,21 @@ export function printPlan(plan: MigrationPlan, logger: Logger): void {
     const m = plan.mappings[i]!;
     const num = `[${i + 1}/${plan.mappings.length}]`;
     const strategyLabel =
-      m.strategy === "volume-stream"
-        ? "docker tar stream"
-        : "rsync";
+      m.strategy === "volume-stream" ? "docker tar stream" : "rsync";
 
     logger.info(`  ${num} ${strategyLabel}`);
-    logger.info(`       Source: ${m.source.type} ${m.source.source}`);
-    logger.info(`               mounted at ${m.source.target}${m.sourceSize ? `  (${m.sourceSize})` : ""}`);
-    logger.info(`       Target: ${m.target.type} ${m.target.source}`);
-    logger.info(`               mounted at ${m.target.target}${m.targetSize ? `  (${m.targetSize})` : ""}`);
+    logger.info(
+      `       Source: ${m.source.type} ${m.source.source}`,
+    );
+    logger.info(
+      `               mounted at ${m.source.target}${m.sourceSize ? `  (${m.sourceSize})` : ""}`,
+    );
+    logger.info(
+      `       Target: ${m.target.type} ${m.target.source}`,
+    );
+    logger.info(
+      `               mounted at ${m.target.target}${m.targetSize ? `  (${m.targetSize})` : ""}`,
+    );
     logger.info("");
   }
 }
@@ -41,11 +59,25 @@ export function planToJson(plan: MigrationPlan): Record<string, unknown> {
     targetHost: plan.targetHost,
     sourceService: plan.sourceService,
     targetService: plan.targetService,
+    stopSource: plan.stopSource,
+    stopTarget: plan.stopTarget,
     clearTarget: plan.clearTarget,
+    startTarget: plan.startTarget,
+    warnings: plan.warnings,
     mappings: plan.mappings.map((m) => ({
       strategy: m.strategy,
-      source: { type: m.source.type, source: m.source.source, target: m.source.target, size: m.sourceSize ?? null },
-      target: { type: m.target.type, source: m.target.source, target: m.target.target, size: m.targetSize ?? null },
+      source: {
+        type: m.source.type,
+        source: m.source.source,
+        target: m.source.target,
+        size: m.sourceSize ?? null,
+      },
+      target: {
+        type: m.target.type,
+        source: m.target.source,
+        target: m.target.target,
+        size: m.targetSize ?? null,
+      },
     })),
   };
 }

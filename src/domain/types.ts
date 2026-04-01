@@ -31,9 +31,14 @@ export type MigrateFlags = {
   target?: string;
   sourceService?: string;
   targetService?: string;
+  stopSource?: boolean;
+  stopTarget?: boolean;
+  startTarget?: boolean;
   clearTarget?: boolean;
   dryRun?: boolean;
   yes?: boolean;
+  allowLiveDbCopy?: boolean;
+  noCompress?: boolean;
 };
 
 export type MigrationPlan = {
@@ -42,5 +47,9 @@ export type MigrationPlan = {
   sourceService: string;
   targetService: string;
   mappings: MountMapping[];
+  stopSource: boolean;
+  stopTarget: boolean;
+  startTarget: boolean;
   clearTarget: boolean;
+  warnings: string[];
 };

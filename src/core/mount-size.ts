@@ -39,7 +39,7 @@ export async function measureMountSize(
  *
  * Falls back to the full path if pattern doesn't match.
  */
-function extractVolumeName(source: string): string {
+export function extractVolumeName(source: string): string {
   const match = source.match(/\/volumes\/([^/]+)\/_data$/);
   return match?.[1] ?? source;
 }
