@@ -42,6 +42,7 @@ function buildArgs(answers: WizardAnswers): string[] {
   if (answers.clearTarget) args.push("--clear-target");
   if (answers.allowLiveDbCopy) args.push("--allow-live-db-copy");
   if (answers.noCompress) args.push("--no-compress");
+  if (answers.verify) args.push("--verify");
   if (answers.dryRun) args.push("--dry-run");
 
   // The wizard already confirms — skip the migrate command's own confirmation
@@ -63,6 +64,7 @@ function formatCommand(answers: WizardAnswers, binName: string): string {
   if (answers.clearTarget) parts.push("--clear-target");
   if (answers.allowLiveDbCopy) parts.push("--allow-live-db-copy");
   if (answers.noCompress) parts.push("--no-compress");
+  if (answers.verify) parts.push("--verify");
   if (answers.dryRun) parts.push("--dry-run");
 
   return parts.join(" \\\n    ");
@@ -83,6 +85,7 @@ type WizardAnswers = {
   clearTarget: boolean;
   allowLiveDbCopy: boolean;
   noCompress: boolean;
+  verify: boolean;
   dryRun: boolean;
 };
 
@@ -169,6 +172,7 @@ async function askBehavior(): Promise<{
   clearTarget: boolean;
   allowLiveDbCopy: boolean;
   noCompress: boolean;
+  verify: boolean;
 }> {
   step(5, TOTAL_STEPS, "Migration behaviour");
 
@@ -190,6 +194,10 @@ async function askBehavior(): Promise<{
     "Start target containers after transfer?",
     true,
   );
+  const verify = await promptConfirm(
+    "Run post-migration validation? (compares file counts, sizes, container health)",
+    true,
+  );
 
   console.log("\nAdvanced options:");
 
@@ -205,7 +213,7 @@ async function askBehavior(): Promise<{
     false,
   );
 
-  return { stopSource, stopTarget, startTarget, clearTarget, allowLiveDbCopy, noCompress };
+  return { stopSource, stopTarget, startTarget, clearTarget, allowLiveDbCopy, noCompress, verify };
 }
 
 async function askDryRun(): Promise<boolean> {
@@ -269,6 +277,7 @@ export const wizardCommand: CommandHandler = async (_args, options) => {
   console.log(`  Clear target:      ${behavior.clearTarget ? "yes" : "no"}`);
   console.log(`  Start target:      ${behavior.startTarget ? "yes" : "no"}`);
   console.log(`  Compress:          ${behavior.noCompress ? "no" : "yes"}`);
+  console.log(`  Verify:            ${behavior.verify ? "yes" : "no"}`);
   if (behavior.allowLiveDbCopy) {
     console.log(`  Live DB copy:      yes (unsafe)`);
   }

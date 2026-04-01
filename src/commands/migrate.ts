@@ -10,6 +10,7 @@ import { UserAbortError } from "../domain/errors";
 import { parseValue, hasFlag } from "../utils/args";
 import { createLogger, type Logger } from "../utils/log";
 import { printPlan, planToJson } from "../utils/plan-display";
+import { verifyMigration, verificationToJson } from "../core/verification";
 
 // ---------------------------------------------------------------------------
 // Flag parsing
@@ -29,6 +30,7 @@ function parseMigrateFlags(args: string[]): MigrateFlags {
     yes: hasFlag(args, "--yes"),
     allowLiveDbCopy: hasFlag(args, "--allow-live-db-copy"),
     noCompress: hasFlag(args, "--no-compress"),
+    verify: hasFlag(args, "--verify"),
   };
 }
 
@@ -70,6 +72,9 @@ function printUsage(logger: Logger): void {
   );
   logger.error(
     "  --no-compress               Disable gzip compression for tar streams",
+  );
+  logger.error(
+    "  --verify                    Run post-migration validation checks",
   );
   logger.error(
     "  --dry-run                   Show plan without executing",
@@ -323,5 +328,24 @@ export const migrateCommand: CommandHandler = async (args, options) => {
 
   if (!result.allSucceeded) {
     process.exit(5);
+  }
+
+  // 9. Post-migration verification
+  if (flags.verify) {
+    const verifyResult = await verifyMigration(
+      plan,
+      { checkContainers: plan.startTarget },
+      logger,
+    );
+
+    if (options.json) {
+      logger.info("Verification result", {
+        ...verificationToJson(verifyResult),
+      });
+    }
+
+    if (!verifyResult.passed) {
+      process.exit(6);
+    }
   }
 };

@@ -39,6 +39,7 @@ export type MigrateFlags = {
   yes?: boolean;
   allowLiveDbCopy?: boolean;
   noCompress?: boolean;
+  verify?: boolean;
 };
 
 export type MigrationPlan = {
