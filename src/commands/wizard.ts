@@ -42,7 +42,6 @@ function buildArgs(answers: WizardAnswers): string[] {
   if (answers.stopTarget) args.push("--stop-target");
   if (answers.startTarget) args.push("--start-target");
   if (answers.clearTarget) args.push("--clear-target");
-  if (answers.allowLiveDbCopy) args.push("--allow-live-db-copy");
   if (answers.noCompress) args.push("--no-compress");
   if (answers.verify) args.push("--verify");
   if (answers.dryRun) args.push("--dry-run");
@@ -64,7 +63,6 @@ function formatCommand(answers: WizardAnswers, binName: string): string {
   if (answers.stopTarget) parts.push("--stop-target");
   if (answers.startTarget) parts.push("--start-target");
   if (answers.clearTarget) parts.push("--clear-target");
-  if (answers.allowLiveDbCopy) parts.push("--allow-live-db-copy");
   if (answers.noCompress) parts.push("--no-compress");
   if (answers.verify) parts.push("--verify");
   if (answers.dryRun) parts.push("--dry-run");
@@ -85,7 +83,6 @@ type WizardAnswers = {
   stopTarget: boolean;
   startTarget: boolean;
   clearTarget: boolean;
-  allowLiveDbCopy: boolean;
   noCompress: boolean;
   verify: boolean;
   dryRun: boolean;
@@ -172,7 +169,6 @@ async function askBehavior(): Promise<{
   stopTarget: boolean;
   startTarget: boolean;
   clearTarget: boolean;
-  allowLiveDbCopy: boolean;
   noCompress: boolean;
   verify: boolean;
 }> {
@@ -181,7 +177,7 @@ async function askBehavior(): Promise<{
   console.log("Configure how the migration should run.\n");
 
   const stopSource = await promptConfirm(
-    "Stop source containers before transfer? (recommended for databases)",
+    "Stop source containers before transfer?",
     false,
   );
   const stopTarget = await promptConfirm(
@@ -201,21 +197,12 @@ async function askBehavior(): Promise<{
     true,
   );
 
-  console.log("\nAdvanced options:");
-
-  const allowLiveDbCopy = !stopSource
-    ? await promptConfirm(
-        "Allow live database copy without stopping source? (risky)",
-        false,
-      )
-    : false;
-
   const noCompress = await promptConfirm(
     "Disable gzip compression? (faster on fast networks, slower on slow ones)",
     false,
   );
 
-  return { stopSource, stopTarget, startTarget, clearTarget, allowLiveDbCopy, noCompress, verify };
+  return { stopSource, stopTarget, startTarget, clearTarget, noCompress, verify };
 }
 
 async function askDryRun(): Promise<boolean> {
@@ -292,9 +279,6 @@ export const wizardCommand: CommandHandler = async (_args, options) => {
   console.log(`  Start target:      ${behavior.startTarget ? "yes" : "no"}`);
   console.log(`  Compress:          ${behavior.noCompress ? "no" : "yes"}`);
   console.log(`  Verify:            ${behavior.verify ? "yes" : "no"}`);
-  if (behavior.allowLiveDbCopy) {
-    console.log(`  Live DB copy:      yes (unsafe)`);
-  }
   console.log(`  Mode:              ${dryRun ? "dry run" : "execute"}`);
 
   const binName = getBinName();

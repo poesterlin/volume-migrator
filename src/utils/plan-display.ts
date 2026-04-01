@@ -16,15 +16,6 @@ export function printPlan(plan: MigrationPlan, logger: Logger): void {
   logger.info(`  Start target:    ${plan.startTarget ? "yes" : "no"}`);
   logger.info("");
 
-  // Warnings
-  if (plan.warnings.length > 0) {
-    logger.warn("  Warnings:");
-    for (const warning of plan.warnings) {
-      logger.warn(`    ! ${warning}`);
-    }
-    logger.info("");
-  }
-
   logger.info(`  ${plan.mappings.length} mount(s) to transfer:\n`);
 
   for (let i = 0; i < plan.mappings.length; i++) {
@@ -63,7 +54,6 @@ export function planToJson(plan: MigrationPlan): Record<string, unknown> {
     stopTarget: plan.stopTarget,
     clearTarget: plan.clearTarget,
     startTarget: plan.startTarget,
-    warnings: plan.warnings,
     mappings: plan.mappings.map((m) => ({
       strategy: m.strategy,
       source: {

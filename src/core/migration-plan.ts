@@ -4,7 +4,7 @@ import { inspectServiceMounts } from "./mount-discovery";
 import { measureMountSize } from "./mount-size";
 import { listServicesOnHost } from "./service-discovery";
 import { matchMounts } from "./matching";
-import { exec, resolveSshKey } from "../infra/ssh";
+import { resolveSshKey } from "../infra/ssh";
 
 // ---------------------------------------------------------------------------
 // Service resolution
@@ -42,90 +42,6 @@ async function resolveService(
 }
 
 // ---------------------------------------------------------------------------
-// Database detection
-// ---------------------------------------------------------------------------
-
-const DB_IMAGE_PATTERNS = [
-  "postgres",
-  "mysql",
-  "mariadb",
-  "redis",
-  "mongo",
-  "mongodb",
-  "clickhouse",
-  "influxdb",
-  "couchdb",
-  "cassandra",
-  "elasticsearch",
-  "meilisearch",
-];
-
-/**
- * Fetch the container images used by a service on a host.
- */
-async function getServiceImages(
-  host: string | undefined,
-  service: string,
-): Promise<string[]> {
-  // Try Coolify label
-  const byLabel = await exec(
-    host,
-    `docker ps -a --filter "label=coolify.name=${service}" --format '{{.Image}}' | sort -u`,
-  );
-
-  if (byLabel.exitCode === 0 && byLabel.stdout.trim()) {
-    return byLabel.stdout.split("\n").filter((i) => i.trim());
-  }
-
-  // Try compose label
-  const byCompose = await exec(
-    host,
-    `docker ps -a --filter "label=com.docker.compose.service=${service}" --format '{{.Image}}' | sort -u`,
-  );
-
-  if (byCompose.exitCode === 0 && byCompose.stdout.trim()) {
-    return byCompose.stdout.split("\n").filter((i) => i.trim());
-  }
-
-  // Fallback by name
-  const byName = await exec(
-    host,
-    `docker ps -a --filter "name=${service}" --format '{{.Image}}'`,
-  );
-
-  if (byName.exitCode === 0 && byName.stdout.trim()) {
-    return byName.stdout.split("\n").filter((i) => i.trim());
-  }
-
-  return [];
-}
-
-/**
- * Check images against known DB patterns and return warnings.
- */
-function detectDatabaseWarnings(
-  images: string[],
-  serviceName: string,
-): string[] {
-  const warnings: string[] = [];
-
-  for (const image of images) {
-    const lower = image.toLowerCase();
-    const dbMatch = DB_IMAGE_PATTERNS.find((p) => lower.includes(p));
-    if (dbMatch) {
-      warnings.push(
-        `Service "${serviceName}" appears to be a database (image: ${image}). ` +
-          `Copying database files from a running instance risks data corruption. ` +
-          `Stop the source container before migration or use --allow-live-db-copy to proceed at your own risk.`,
-      );
-      break; // One DB warning per service is sufficient
-    }
-  }
-
-  return warnings;
-}
-
-// ---------------------------------------------------------------------------
 // Plan builder
 // ---------------------------------------------------------------------------
 
@@ -137,8 +53,7 @@ function detectDatabaseWarnings(
  * 2. Discover mounts on both sides
  * 3. Match source mounts to target mounts
  * 4. Measure sizes (in parallel)
- * 5. Detect database workloads and generate warnings
- * 6. Return the complete plan
+ * 5. Return the complete plan
  */
 export async function buildMigrationPlan(
   flags: MigrateFlags,
@@ -176,10 +91,6 @@ export async function buildMigrationPlan(
     mappings[i]!.targetSize = sizeResults[i * 2 + 1];
   }
 
-  // Detect database warnings
-  const sourceImages = await getServiceImages(sourceHost, sourceService);
-  const warnings = detectDatabaseWarnings(sourceImages, sourceService);
-
   return {
     sourceHost: sourceHost ?? "localhost",
     targetHost: targetHost ?? "localhost",
@@ -190,6 +101,5 @@ export async function buildMigrationPlan(
     stopTarget: flags.stopTarget ?? false,
     startTarget: flags.startTarget ?? false,
     clearTarget: flags.clearTarget ?? false,
-    warnings,
   };
 }

@@ -28,7 +28,6 @@ function parseMigrateFlags(args: string[]): MigrateFlags {
     clearTarget: hasFlag(args, "--clear-target"),
     dryRun: hasFlag(args, "--dry-run"),
     yes: hasFlag(args, "--yes"),
-    allowLiveDbCopy: hasFlag(args, "--allow-live-db-copy"),
     noCompress: hasFlag(args, "--no-compress"),
     verify: hasFlag(args, "--verify"),
   };
@@ -66,9 +65,6 @@ function printUsage(logger: Logger): void {
   );
   logger.error(
     "  --clear-target              Wipe target volume/path before restore",
-  );
-  logger.error(
-    "  --allow-live-db-copy        Allow copying database volumes without stopping",
   );
   logger.error(
     "  --no-compress               Disable gzip compression for tar streams",
@@ -169,36 +165,6 @@ async function checkTargetProtection(
 }
 
 // ---------------------------------------------------------------------------
-// DB safety gate
-// ---------------------------------------------------------------------------
-
-function checkDatabaseSafety(
-  plan: MigrationPlan,
-  flags: MigrateFlags,
-  logger: Logger,
-): void {
-  if (plan.warnings.length === 0) return;
-
-  for (const w of plan.warnings) {
-    logger.warn(`\n! ${w}`);
-  }
-
-  // If source is not being stopped and --allow-live-db-copy is not set, refuse
-  const isDbWarning = plan.warnings.some((w) =>
-    w.includes("appears to be a database"),
-  );
-  if (isDbWarning && !plan.stopSource && !flags.allowLiveDbCopy) {
-    logger.error(
-      "\nRefusing to copy database volumes from a running instance.",
-    );
-    logger.error(
-      "Use --stop-source to stop the source first, or --allow-live-db-copy to override.",
-    );
-    process.exit(5);
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Summary
 // ---------------------------------------------------------------------------
 
@@ -271,7 +237,7 @@ export const migrateCommand: CommandHandler = async (args, options) => {
     process.exit(1);
   }
 
-  // 1. Build the plan (discovery + matching + size + DB detection)
+  // 1. Build the plan (discovery + matching + size)
   logger.info("Discovering services and mounts...\n");
   const plan = await buildMigrationPlan(flags);
 
@@ -288,13 +254,10 @@ export const migrateCommand: CommandHandler = async (args, options) => {
     return;
   }
 
-  // 4. DB safety gate
-  checkDatabaseSafety(plan, flags, logger);
-
-  // 5. Target protection
+  // 4. Target protection
   await checkTargetProtection(plan, flags, logger);
 
-  // 6. Final confirmation
+  // 5. Final confirmation
   if (!flags.yes) {
     const proceed = await confirm("\nProceed with migration?");
     if (!proceed) {
@@ -302,11 +265,11 @@ export const migrateCommand: CommandHandler = async (args, options) => {
     }
   }
 
-  // 7. Execute
+  // 6. Execute
   const compress = !flags.noCompress;
   const result = await executeMigration(plan, { compress }, logger);
 
-  // 8. Summary
+  // 7. Summary
   if (options.json) {
     logger.info("Migration result", {
       allSucceeded: result.allSucceeded,
@@ -330,7 +293,7 @@ export const migrateCommand: CommandHandler = async (args, options) => {
     process.exit(5);
   }
 
-  // 9. Post-migration verification
+  // 8. Post-migration verification
   if (flags.verify) {
     const verifyResult = await verifyMigration(
       plan,

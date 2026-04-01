@@ -37,7 +37,6 @@ export type MigrateFlags = {
   clearTarget?: boolean;
   dryRun?: boolean;
   yes?: boolean;
-  allowLiveDbCopy?: boolean;
   noCompress?: boolean;
   verify?: boolean;
 };
@@ -52,5 +51,4 @@ export type MigrationPlan = {
   stopTarget: boolean;
   startTarget: boolean;
   clearTarget: boolean;
-  warnings: string[];
 };
