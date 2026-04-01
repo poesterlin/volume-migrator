@@ -42,7 +42,7 @@ const commands: CommandSpec[] = [
   },
 ];
 
-function getBinName(): string {
+export function getBinName(): string {
   const argv0 = Bun.argv[0] ?? "volume-migrator";
   const basename = argv0.split("/").pop() ?? "volume-migrator";
   const arg1 = Bun.argv[1];

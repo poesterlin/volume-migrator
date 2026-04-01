@@ -2,6 +2,7 @@ import { listServicesOnHost } from "../core/service-discovery";
 import { runLocalToolChecks } from "../core/preflight";
 import { resolveSshKey } from "../infra/ssh";
 import { migrateCommand } from "./migrate";
+import { getBinName } from "../cli";
 import type { CommandHandler } from "../domain/types";
 import { promptInput, promptConfirm, promptSelect } from "../utils/prompt";
 
@@ -296,7 +297,7 @@ export const wizardCommand: CommandHandler = async (_args, options) => {
   }
   console.log(`  Mode:              ${dryRun ? "dry run" : "execute"}`);
 
-  const binName = process.argv[0]?.split("/").pop() ?? "volume-migrator";
+  const binName = getBinName();
   console.log(`\nEquivalent command:\n\n  ${formatCommand(answers, binName)}\n`);
 
   // Final confirmation
