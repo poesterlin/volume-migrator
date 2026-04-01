@@ -1,0 +1,19 @@
+{
+  "name": "volume-migrator",
+  "module": "src/cli.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "cli": "bun run src/cli.ts",
+    "start": "bun run src/cli.ts",
+    "build:bin": "bun build --compile src/cli.ts --outfile volume-migrator",
+    "typecheck": "bunx tsc --noEmit",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
