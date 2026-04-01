@@ -32,7 +32,7 @@ jobs:
         run: bun run typecheck
 
       - name: Compile binary
-        run: bun build --compile src/cli.ts --outfile volume-migrator
+        run: bun build --compile --minify src/cli.ts --outfile volume-migrator
 
       - name: Smoke test
         run: ./volume-migrator --help
